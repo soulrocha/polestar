@@ -2839,7 +2839,6 @@ L["You sold %s, which %s still needs. Buy it back for %s?"] = "Você vendeu %s, 
 -- L["Dead"] = ""
 -- L["Far away"] = ""
 -- L["Still needs: %s"] = ""
--- L["Nobody in your party yet."] = ""
 -- L["Show or hide the party panel"] = ""
 
 -- No longer in the code (its English changed or it went away): reuse or delete.

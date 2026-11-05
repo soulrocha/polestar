@@ -2840,7 +2840,6 @@ L["Offline"] = "Hors ligne"
 L["Dead"] = "Mort"
 L["Far away"] = "Loin"
 L["Still needs: %s"] = "Il lui faut encore : %s"
-L["Nobody in your party yet."] = "Personne dans votre groupe pour l'instant."
 L["Show or hide the party panel"] = "Afficher ou masquer le panneau du groupe"
 
 -- No longer in the code (its English changed or it went away): reuse or delete.
