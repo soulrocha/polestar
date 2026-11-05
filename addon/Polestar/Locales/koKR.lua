@@ -218,6 +218,7 @@ L["Usage: /polestar way <x> <y> [label]"] = "사용법: /polestar way <x> <y> [�
 L["Point the arrow at x y on your current map (no argument clears it)"] = "현재 지도의 x y를 화살표로 가리킴 (인수 없으면 지움)"
 L["Shortest Path Forever is guiding a journey of its own. Polestar's arrow comes back when it ends."] = "Shortest Path Forever가 자체 여정을 안내 중입니다. 여정이 끝나면 Polestar의 화살표가 돌아옵니다."
 L["Shortest Path Forever is guiding. Turn off \"Hand guiding to Shortest Path Forever\" (Options, Integrations) to use Polestar's arrow."] = "Shortest Path Forever가 안내 중입니다. Polestar의 화살표를 사용하려면 \"Shortest Path Forever에 안내 맡기기\"(설정, 연동)를 끄세요."
+L["The guide is hidden and \"Hide the arrow with the guide\" is on, so the arrow is hidden too: /polestar show brings them back."] = "가이드가 숨겨져 있고 '가이드와 함께 화살표 숨기기'가 켜져 있어 화살표도 숨겨졌습니다: /polestar show로 다시 표시합니다."
 
 -- Nav/Arrow.lua
 L["Search here"] = "여기서 찾기"
@@ -1927,6 +1928,8 @@ L["Continue automatically"] = "자동으로 계속"
 -- L["%d KiB"] = ""
 -- L["%.1f MB"] = ""
 -- L["%d KB"] = ""
+L["Hide the arrow with the guide"] = "가이드와 함께 화살표 숨기기"
+L["When the guide window is hidden, hide the arrow too."] = "가이드 창을 숨기면 화살표도 숨깁니다."
 
 -- Rares/Rares.lua
 L["Raid warning"] = "공격대 경보"

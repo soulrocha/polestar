@@ -515,6 +515,7 @@ L["Point the arrow at x y on your current map (no argument clears it)"] = "Apunt
 L["Greyed out while Shortest Path Forever guides: it does this itself."] = "Atenuado mientras guía Shortest Path Forever: lo hace él mismo."
 L["Shortest Path Forever is guiding a journey of its own. Polestar's arrow comes back when it ends."] = "Shortest Path Forever está guiando un trayecto propio. La flecha de Polestar vuelve cuando termine."
 L["Shortest Path Forever is guiding. Turn off \"Hand guiding to Shortest Path Forever\" (Options, Integrations) to use Polestar's arrow."] = "Shortest Path Forever está guiando. Desactiva \"Ceder la guía a Shortest Path Forever\" (Opciones, Integraciones) para usar la flecha de Polestar."
+L["The guide is hidden and \"Hide the arrow with the guide\" is on, so the arrow is hidden too: /polestar show brings them back."] = "La guía está oculta y \"Ocultar la flecha con la guía\" está activado, así que la flecha también: /polestar show las vuelve a mostrar."
 
 -- Nav/Travel.lua
 L["Go to %s"] = "Ve a %s"
@@ -1648,6 +1649,8 @@ L["Continue automatically"] = "Continuar automáticamente"
 -- L["%d KiB"] = ""
 -- L["%.1f MB"] = ""
 -- L["%d KB"] = ""
+L["Hide the arrow with the guide"] = "Ocultar la flecha con la guía"
+L["When the guide window is hidden, hide the arrow too."] = "Cuando la ventana de la guía está oculta, ocultar también la flecha."
 
 -- UI/Packs.lua
 L["turned off in the AddOns list"] = "desactivado en la lista de AddOns"

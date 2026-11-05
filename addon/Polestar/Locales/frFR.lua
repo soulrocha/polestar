@@ -219,6 +219,7 @@ L["Usage: /polestar way <x> <y> [label]"] = "Usage : /polestar way <x> <y> [libe
 L["Point the arrow at x y on your current map (no argument clears it)"] = "Pointer la flèche sur x y de votre carte (sans argument, l'efface)"
 L["Shortest Path Forever is guiding a journey of its own. Polestar's arrow comes back when it ends."] = "Shortest Path Forever guide son propre trajet. La flèche de Polestar revient quand il se termine."
 L["Shortest Path Forever is guiding. Turn off \"Hand guiding to Shortest Path Forever\" (Options, Integrations) to use Polestar's arrow."] = "Shortest Path Forever guide. Désactivez \"Confier le guidage à Shortest Path Forever\" (Options, Intégrations) pour utiliser la flèche de Polestar."
+L["The guide is hidden and \"Hide the arrow with the guide\" is on, so the arrow is hidden too: /polestar show brings them back."] = "Le guide est masqué et « Masquer la flèche avec le guide » est activé, donc la flèche l'est aussi : /polestar show les fait revenir."
 
 -- Nav/Arrow.lua
 L["Search here"] = "Cherchez ici"
@@ -1928,6 +1929,8 @@ L["When a leveling guide ends"] = "À la fin d'un guide de progression"
 L["Ask me: a window says the guide is done and offers the next one. Continue automatically: the next guide loads in the same tab."] = "Me demander : une fenêtre indique que le guide est terminé et propose le suivant. Continuer automatiquement : le guide suivant se charge dans le même onglet."
 L["Ask me"] = "Me demander"
 L["Continue automatically"] = "Continuer automatiquement"
+L["Hide the arrow with the guide"] = "Masquer la flèche avec le guide"
+L["When the guide window is hidden, hide the arrow too."] = "Quand la fenêtre du guide est masquée, masquer aussi la flèche."
 
 -- Rares/Rares.lua
 L["Raid warning"] = "Avertissement de raid"

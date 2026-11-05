@@ -218,6 +218,7 @@ L["Usage: /polestar way <x> <y> [label]"] = "用法：/polestar way <x> <y> [標
 L["Point the arrow at x y on your current map (no argument clears it)"] = "將箭頭指向目前地圖上的 x y（無參數則清除）"
 L["Shortest Path Forever is guiding a journey of its own. Polestar's arrow comes back when it ends."] = "Shortest Path Forever 正在導引它自己的旅程。旅程結束後 Polestar 的箭頭會回來。"
 L["Shortest Path Forever is guiding. Turn off \"Hand guiding to Shortest Path Forever\" (Options, Integrations) to use Polestar's arrow."] = "Shortest Path Forever 正在導引。若要使用 Polestar 的箭頭，請關閉\"交由 Shortest Path Forever 導引\"（選項，整合）。"
+L["The guide is hidden and \"Hide the arrow with the guide\" is on, so the arrow is hidden too: /polestar show brings them back."] = "指南已隱藏，且「隨指南隱藏箭頭」已開啟，因此箭頭也已隱藏：/polestar show 可恢復顯示。"
 
 -- Nav/Arrow.lua
 L["Search here"] = "在此搜尋"
@@ -1927,6 +1928,8 @@ L["Continue automatically"] = "自動繼續"
 -- L["%d KiB"] = ""
 -- L["%.1f MB"] = ""
 -- L["%d KB"] = ""
+L["Hide the arrow with the guide"] = "隨指南隱藏箭頭"
+L["When the guide window is hidden, hide the arrow too."] = "隱藏指南視窗時，也隱藏箭頭。"
 
 -- Rares/Rares.lua
 L["Raid warning"] = "團隊警告"
