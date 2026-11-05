@@ -147,6 +147,8 @@ local GUIDE, LOOK, MAP, QUESTING, DISCOVERY, QOL, REC, ABOUT =
 
 local function resetPositions()
 	ns.Set("ui.pos", nil)
+	-- The party panel re-places itself on the change (UI/PartyPanel.lua).
+	ns.Set("party.panelPos", nil)
 	if ns.Nav and ns.Nav.ResetArrowPosition then ns.Nav.ResetArrowPosition() end
 	if win then
 		win:ClearAllPoints()
@@ -1052,8 +1054,9 @@ end
 
 local searchView
 
+-- `terms`: a control's extra words for the search (other names players use).
 local function matches(c, words)
-	local hay = ((labelOf(c) or "") .. " " .. (c.help or "") .. " " .. (c.page and c.page.name or "") .. " " .. (c.tab or "") .. " " .. (c.section or "")):lower()
+	local hay = ((labelOf(c) or "") .. " " .. (c.help or "") .. " " .. (c.terms or "") .. " " .. (c.page and c.page.name or "") .. " " .. (c.tab or "") .. " " .. (c.section or "")):lower()
 	for _, w in ipairs(words) do
 		if not hay:find(w, 1, true) then return false end
 	end
