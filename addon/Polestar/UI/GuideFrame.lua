@@ -2076,10 +2076,21 @@ end
 
 -- The tallest the window may be: ui.maxHeight of the screen's height, in
 -- the window's own units (its scale and the game's UI scale applied).
+local roomAbove -- below
+local AUTO_MARGIN = 24 -- ui.maxHeightAuto: room left to the screen's edge, in the window's units
 local function capHeight()
-	local share = tonumber(ns.Get("ui.maxHeight")) or 0.5
 	local screen = UIParent:GetHeight() * UIParent:GetEffectiveScale()
-	return screen * share / max(0.01, F:GetEffectiveScale())
+	local scale = max(0.01, F:GetEffectiveScale())
+	local share = tonumber(ns.Get("ui.maxHeight")) or 0.5
+	if ns.Get("ui.maxHeightAuto") then
+		-- Automatic: all the room from the pinned edge to the screen's edge, less
+		-- a margin; never under the slider's lowest (30%) nor over the screen.
+		local room = ns.Get("ui.growUp") and roomAbove() or F:GetTop()
+		if type(room) == "number" then
+			return min(screen / scale, max(room - AUTO_MARGIN, screen * 0.3 / scale))
+		end
+	end
+	return screen * share / scale
 end
 GF.CapHeight = function() return F and capHeight() or nil end
 
@@ -2144,7 +2155,7 @@ end
 -- With ui.growUp, the height from the window's pinned bottom edge to the top
 -- of the screen, in the window's scale (nil without Grow upward): the
 -- window is never taller (fit.limit, #666).
-local function roomAbove()
+roomAbove = function()
 	if not ns.Get("ui.growUp") then return nil end
 	local top = UIParent:GetTop()
 	local scale, uiScale = F:GetEffectiveScale(), UIParent:GetEffectiveScale()
@@ -3442,7 +3453,7 @@ local APPLY = {
 	["ui.compact"] = function() GF.ApplyCompact() end,
 	["ui.width"] = function() GF.ApplyWidth() end,
 	-- With Grow upward the room above the bottom edge sets the window's height.
-	["ui.pos"] = function() GF.ApplyPosition(); if ns.Get("ui.growUp") then GF.Layout() end end,
+	["ui.pos"] = function() GF.ApplyPosition(); if ns.Get("ui.growUp") or ns.Get("ui.maxHeightAuto") then GF.Layout() end end,
 	-- Re-pin by the other corner where the window stands now, so it does not jump.
 	["ui.growUp"] = function() GF.SavePosition(); GF.Layout() end,
 	["ui.barsBottom"] = function() GF.Layout() end,
@@ -3451,6 +3462,7 @@ local APPLY = {
 	["ui.showNotes"] = function() GF.Render() end,
 	["ui.notesOpen"] = function() tipOpen = ns.Get("ui.notesOpen") and true or false; GF.Render() end,
 	["ui.maxHeight"] = function() GF.Layout() end,
+	["ui.maxHeightAuto"] = function() GF.Layout() end,
 	-- Another way of reading the card: nothing kept from the one before.
 	["ui.wholeStep"] = function() resetModel(); GF.Render() end,
 	["ui.combat"] = function() GF.ApplyVisibility(); GF.ApplyAlpha(false) end,
