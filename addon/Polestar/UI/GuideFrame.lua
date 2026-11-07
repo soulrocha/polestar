@@ -2077,8 +2077,8 @@ end
 -- The tallest the window may be: ui.maxHeight of the screen's height, in
 -- the window's own units (its scale and the game's UI scale applied).
 local roomAbove -- below
-local AUTO_MARGIN = 24 -- ui.maxHeightAuto: room left to the screen's edge, in the window's units
 local function capHeight()
+	local margin = 24 -- ui.maxHeightAuto: room left to the screen's edge, in the window's units
 	local screen = UIParent:GetHeight() * UIParent:GetEffectiveScale()
 	local scale = max(0.01, F:GetEffectiveScale())
 	local share = tonumber(ns.Get("ui.maxHeight")) or 0.5
@@ -2087,7 +2087,7 @@ local function capHeight()
 		-- a margin; never under the slider's lowest (30%) nor over the screen.
 		local room = ns.Get("ui.growUp") and roomAbove() or F:GetTop()
 		if type(room) == "number" then
-			return min(screen / scale, max(room - AUTO_MARGIN, screen * 0.3 / scale))
+			return min(screen / scale, max(room - margin, screen * 0.3 / scale))
 		end
 	end
 	return screen * share / scale
@@ -3461,7 +3461,8 @@ local APPLY = {
 	["ui.upcomingOpen"] = function() GF.Render() end,
 	["ui.showNotes"] = function() GF.Render() end,
 	["ui.notesOpen"] = function() tipOpen = ns.Get("ui.notesOpen") and true or false; GF.Render() end,
-	["ui.maxHeight"] = function() GF.Layout() end,
+	-- Setting a height (the slider, the grip) leaves Automatic.
+	["ui.maxHeight"] = function() if ns.Get("ui.maxHeightAuto") then ns.Set("ui.maxHeightAuto", false) else GF.Layout() end end,
 	["ui.maxHeightAuto"] = function() GF.Layout() end,
 	-- Another way of reading the card: nothing kept from the one before.
 	["ui.wholeStep"] = function() resetModel(); GF.Render() end,
@@ -3711,7 +3712,43 @@ local function dragStop()
 	if UI.ClassToast and UI.ClassToast.Place then UI.ClassToast.Place(false) end
 end
 
+-- The line at the height limit, with its value in px, while the grip is dragged:
+-- the window may be shorter than its limit, so the limit shows on its own.
+function GF.ShowLimit(on)
+	local limitLine = GF.limitLine
+	if not limitLine then
+		limitLine = CreateFrame("Frame", nil, F)
+		GF.limitLine = limitLine
+		limitLine:SetHeight(2)
+		limitLine:SetFrameLevel(F:GetFrameLevel() + 20)
+		limitLine.Line = limitLine:CreateTexture(nil, "OVERLAY")
+		limitLine.Line:SetAllPoints()
+		W.Color(limitLine.Line, "accent")
+		limitLine.Text = W.Text(limitLine, "number", "text")
+		limitLine.Text:SetPoint("BOTTOMRIGHT", limitLine, "TOPRIGHT", -4, 2)
+	end
+	limitLine:SetShown(on)
+	if not on then return end
+	local cap = capHeight()
+	limitLine:ClearAllPoints()
+	local up = ns.Get("ui.growUp")
+	limitLine:SetPoint(up and "BOTTOMLEFT" or "TOPLEFT", F, up and "BOTTOMLEFT" or "TOPLEFT", 0, up and cap or -cap)
+	limitLine:SetPoint(up and "BOTTOMRIGHT" or "TOPRIGHT", F, up and "BOTTOMRIGHT" or "TOPRIGHT", 0, up and cap or -cap)
+	limitLine.Text:SetText(string.format(L["%d px"], floor(cap * F:GetEffectiveScale() + 0.5)))
+end
+
 local function resizeUpdate(self)
+	-- Vertical: the height limit follows the mouse by how far it moved, down
+	-- with the top edge pinned, up with Grow upward (the bottom edge pinned).
+	-- It turns Automatic off, once the mouse has moved a few px.
+	local dy = (self.psStartY - select(2, GetCursorPosition()) / F:GetEffectiveScale()) * (ns.Get("ui.growUp") and -1 or 1)
+	if self.psSized or math.abs(dy) >= 3 then
+		self.psSized = true
+		local screen = UIParent:GetHeight() * UIParent:GetEffectiveScale()
+		local px = floor((self.psStartCap + dy) * F:GetEffectiveScale() + 0.5)
+		ns.Set("ui.maxHeight", min(1, max(0.3, px / screen)))
+		GF.ShowLimit(true)
+	end
 	local x = GetCursorPosition() / F:GetEffectiveScale()
 	local w = min(UI.MAX_WIDTH, max(UI.MIN_WIDTH, floor(self.psStartW + (x - self.psStartX) + 0.5)))
 	if w ~= floor(F:GetWidth() + 0.5) then
@@ -3730,6 +3767,9 @@ local function resizeStart(self)
 		F:SetPoint(corner, UIParent, "BOTTOMLEFT", l, y)
 	end
 	self.psStartX = GetCursorPosition() / F:GetEffectiveScale()
+	self.psStartY = select(2, GetCursorPosition()) / F:GetEffectiveScale()
+	self.psStartCap = capHeight()
+	self.psSized = false
 	self.psStartW = F:GetWidth()
 	self:SetScript("OnUpdate", ns.Safe(resizeUpdate))
 end
@@ -3737,6 +3777,7 @@ end
 local function resizeStop(self)
 	if not self:GetScript("OnUpdate") then return end
 	self:SetScript("OnUpdate", nil)
+	GF.ShowLimit(false)
 	ns.Set("ui.width", floor(F:GetWidth() + 0.5))
 	savePosition()
 end

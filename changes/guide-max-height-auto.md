@@ -1,7 +1,9 @@
 ---
 section: players
 ---
-- Guide window: a new "Automatic height" option (Options, Guide, Window) lets the
-  window grow into all the free room on screen, under its top edge or over its
-  bottom edge with Grow upward, less the class quest card. Off by default; the
-  Maximum height slider is unchanged and is ignored while it is on.
+- Guide window: set how tall it may grow by dragging the grip at its bottom
+  right up or down (a line and the value in px show the limit while you drag),
+  or with the Maximum height slider, now in pixels and in steps of 1%. A new
+  "Automatic height" option instead uses all the free room on screen, less the
+  class quest card; setting a height turns it off. Nothing changes until you
+  use them.

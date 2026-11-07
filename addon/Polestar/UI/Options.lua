@@ -166,6 +166,8 @@ local function borderOff() return not ns.Get("ui.border") end
 -- no starlit band and no drop shadow (Theme.lua, "Skins").
 local function houseOnly() return Theme.SkinKey() ~= "polestar" end
 local function px(v) return string.format(L["%d px"], floor(v + 0.5)) end
+-- The height limit (a share of the screen) with its pixels beside it.
+local function heightText(v) return px(v * UIParent:GetHeight() * UIParent:GetEffectiveScale()) .. "  \194\183  " .. percent(v) end
 -- Guidance options with no effect while Shortest Path Forever guides (Nav/Handoff.lua).
 local function H(c)
 	local N = ns.Nav
@@ -201,10 +203,9 @@ local BUILTIN = {
 		{ kind = "toggle", key = "ui.wholeStep", label = L["Show the whole step"],
 			help = L["Every goal of the step at once, finished ones kept, instead of one person at a time with the others on one line each."] },
 		{ kind = "toggle", key = "ui.maxHeightAuto", label = L["Automatic height"],
-			help = L["The window grows into all the free room on screen, under its top edge or over its bottom edge with Grow upward, less the class quest card."] },
-		{ kind = "slider", key = "ui.maxHeight", label = L["Maximum height"], min = 0.3, max = 0.9, step = 0.05, format = percent,
-			child = true, disabled = function() return ns.Get("ui.maxHeightAuto") and true or false end,
-			help = L["How tall the window may grow, as a share of the screen. A longer step scrolls."] },
+			help = L["The window grows into all the free room on screen, under its top edge or over its bottom edge with Grow upward, less the class quest card. Setting a height turns it off."] },
+		{ kind = "slider", key = "ui.maxHeight", label = L["Maximum height"], min = 0.3, max = 1, step = 0.01, format = heightText, search = "height, pixels, px, resize, taller, shorter",
+			help = L["How tall the window may grow, in pixels and as a share of the screen. Drag the grip at the bottom right to set it by eye. Changing it turns off Automatic height. A longer step scrolls."] },
 		{ kind = "toggle", key = "ui.showNotes", label = L["Step tips"], help = L["The author's tip under the goals, one line until clicked."] },
 		{ kind = "toggle", key = "ui.notesOpen", label = L["Expand step tips"], help = L["Start each step with its tip in full instead of one line."],
 			child = true, disabled = function() return not ns.Get("ui.showNotes") end },

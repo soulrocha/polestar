@@ -79,9 +79,9 @@ test('off (the default) the slider alone sets the cap, wherever the window stand
 test('on, the cap is the room under the top edge less the margin, and the slider is ignored', () => {
 	const [on, slid, moved, off] = run(`
 		${TOP}
+		Polestar.Set("ui.maxHeight", 0.9)
 		Polestar.Set("ui.maxHeightAuto", true)
 		emit({ cap = GF.CapHeight(), h = F:GetHeight(), over = goals.psOver })
-		Polestar.Set("ui.maxHeight", 0.9)
 		emit({ cap = GF.CapHeight(), h = F:GetHeight() })
 		F.GetTop = function() return 700 end
 		Polestar.Set("ui.pos", { 100, 700 })
@@ -91,7 +91,7 @@ test('on, the cap is the room under the top edge less the margin, and the slider
 	assert.equal(on.cap, 460 - 24);
 	assert.equal(on.over, true, 'the busy step is longer than the room, so it scrolls');
 	assert.ok(on.h <= on.cap + 0.5, JSON.stringify(on));
-	assert.equal(slid.cap, on.cap, 'the slider changes nothing while Automatic is on');
+	assert.equal(slid.cap, on.cap, 'the stored slider value (90%) is ignored while Automatic is on');
 	assert.equal(moved.cap, 700 - 24, 'moving the window re-measures the room');
 	assert.ok(moved.h > on.h + 1, 'and the window takes the room: ' + JSON.stringify([on, moved]));
 	assert.equal(off.cap, 972, 'off again, the slider rules');
@@ -110,8 +110,8 @@ test('with Grow upward the room is the one over the pinned bottom edge', () => {
 test('on, the class card still comes off the room', () => {
 	const [before, shown, gone] = run(`
 		${TOP}
-		Polestar.Set("ui.maxHeightAuto", true)
 		Polestar.Set("ui.maxHeight", 0.9)
+		Polestar.Set("ui.maxHeightAuto", true)
 		emit({ h = F:GetHeight(), cap = GF.CapHeight() })
 		CT.Show(1506)
 		stub.advance(1)
@@ -132,4 +132,99 @@ test('a window pinned near the bottom of the screen keeps a floor of 30% of it',
 		Polestar.Set("ui.maxHeightAuto", true)
 		emit({ cap = GF.CapHeight() })`);
 	assert.equal(c.cap, 324);
+});
+
+// The grip at the window's bottom right: a drag sets the height limit too.
+// The cursor y runs up the screen, as in the game.
+const DRAG = `
+local grip = GF.grip
+local function drag(x0, y0, x1, y1)
+	stub.cursor = { x0, y0 }
+	stub.RunScript(grip, "OnMouseDown", "LeftButton")
+	stub.cursor = { x1, y1 }
+	stub.RunScript(grip, "OnUpdate", 0)
+end
+local function drop() stub.RunScript(grip, "OnMouseUp", "LeftButton") end
+`;
+
+test('dragging the grip down sets the limit by how far it moved, the top edge pinned, and the line shows it', () => {
+	const [mid, done] = run(`${DRAG}
+		drag(500, 600, 500, 500)
+		local line = GF.limitLine
+		emit({ max = Polestar.Get("ui.maxHeight"), cap = GF.CapHeight(), line = line:IsShown(), text = line.Text:GetText() })
+		drop()
+		emit({ line = line:IsShown(), max = Polestar.Get("ui.maxHeight") })`);
+	assert.equal(mid.cap, 532, 'the 432 px limit grew by the 100 px drag');
+	assert.ok(Math.abs(mid.max - 532 / 1080) < 1e-6, JSON.stringify(mid));
+	assert.equal(mid.line, true);
+	assert.equal(mid.text, '532 px');
+	assert.equal(done.line, false, 'the line goes away on release');
+	assert.ok(Math.abs(done.max - 532 / 1080) < 1e-6, 'and the limit stays');
+});
+
+test('with Grow upward the limit grows by dragging up, and the line sits over the pinned bottom edge', () => {
+	const [c] = run(`${DRAG}
+		Polestar.Set("ui.growUp", true)
+		Polestar.Set("ui.pos", { 100, 200 })
+		drag(500, 600, 500, 700)
+		local _, _, _, _, y = GF.limitLine:GetPoint(1)
+		emit({ cap = GF.CapHeight(), point = (GF.limitLine:GetPoint(1)), y = y })
+		drop()
+		drag(500, 600, 500, 500)
+		emit({ cap = GF.CapHeight() })
+		drop()`);
+	assert.equal(c.cap, 532);
+	assert.equal(c.point, 'BOTTOMLEFT');
+	assert.equal(c.y, 532);
+});
+
+test('the limit stays between 30% and 100% of the screen', () => {
+	const [lo, hi] = run(`${DRAG}
+		drag(500, 600, 500, 900)
+		emit({ max = Polestar.Get("ui.maxHeight") })
+		drop()
+		drag(500, 600, 500, -900)
+		emit({ max = Polestar.Get("ui.maxHeight") })
+		drop()`);
+	assert.equal(lo.max, 0.3);
+	assert.equal(hi.max, 1);
+});
+
+test('only a vertical drag changes the limit; a sideways one leaves the default as it was', () => {
+	const [c] = run(`${DRAG}
+		drag(500, 600, 560, 601)
+		emit({ max = Polestar.Get("ui.maxHeight"), w = F:GetWidth() })
+		drop()`);
+	assert.equal(c.max, 0.4);
+	assert.ok(c.w > 340, 'the width still follows: ' + c.w);
+});
+
+test('a vertical drag or the slider turns Automatic off; a sideways drag does not', () => {
+	const [side, vert, slider] = run(`${DRAG}
+		${TOP}
+		Polestar.Set("ui.maxHeightAuto", true)
+		drag(500, 600, 560, 600)
+		emit({ auto = Polestar.Get("ui.maxHeightAuto") })
+		drop()
+		drag(500, 600, 500, 500)
+		emit({ auto = Polestar.Get("ui.maxHeightAuto"), cap = GF.CapHeight(), max = Polestar.Get("ui.maxHeight") })
+		drop()
+		Polestar.Set("ui.maxHeightAuto", true)
+		Polestar.Set("ui.maxHeight", 0.7)
+		emit({ auto = Polestar.Get("ui.maxHeightAuto"), cap = GF.CapHeight() })`);
+	assert.equal(side.auto, true);
+	assert.equal(vert.auto, false);
+	assert.equal(vert.cap, 460 - 24 + 100, 'it starts from the room Automatic had');
+	assert.equal(slider.auto, false);
+	assert.equal(slider.cap, 756, 'the slider value rules once Automatic is off');
+});
+
+test('Lock window locks the height drag too', () => {
+	const [c] = run(`${DRAG}
+		Polestar.Set("ui.locked", true)
+		drag(500, 600, 500, 400)
+		emit({ max = Polestar.Get("ui.maxHeight"), line = GF.limitLine and GF.limitLine:IsShown() or false, grip = GF.grip:IsShown() })`);
+	assert.equal(c.max, 0.4);
+	assert.equal(c.line, false);
+	assert.equal(c.grip, false);
 });
