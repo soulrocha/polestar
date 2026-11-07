@@ -282,6 +282,17 @@ test('the number field shows the limit in px, takes a typed value on Enter and c
 	assert.equal(hi.text, '1080');
 });
 
+test('the slider shows the same pixels as the field for a typed height between two 1% steps', () => {
+	const [c] = run(`${ROWS}
+		typeIn("402")
+		-- The game's slider keeps its value on the 1% step and reports that (0.37 for 402 of 1080 px).
+		stub.RunScript(slider.Slider, "OnValueChanged", 0.37, false)
+		emit({ field = field:GetText(), slider = slider.Value:GetText(), max = Polestar.Get("ui.maxHeight") })`);
+	assert.ok(Math.abs(c.max - 402 / 1080) < 1e-9, 'the typed height is kept: ' + c.max);
+	assert.equal(c.field, '402');
+	assert.match(c.slider, /^402 px/, `the slider says ${c.slider} while the field says ${c.field}`);
+});
+
 test('Escape and an empty or non-numeric field put the old number back', () => {
 	const [esc, empty, junk] = run(`${ROWS}
 		field:SetFocus()

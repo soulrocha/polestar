@@ -168,7 +168,12 @@ local function houseOnly() return Theme.SkinKey() ~= "polestar" end
 local function px(v) return string.format(L["%d px"], floor(v + 0.5)) end
 -- The height limit (a share of the screen) with its pixels beside it.
 local function screenH() return UIParent:GetHeight() * UIParent:GetEffectiveScale() end
-local function heightText(v) return px(v * screenH()) .. "  \194\183  " .. percent(v) end
+local function heightText(v)
+	-- The slider reports its value on the 1% step; a typed or dragged height between two steps shows as kept.
+	local kept = tonumber(ns.Get("ui.maxHeight"))
+	if kept and math.abs(kept - v) < 0.005 then v = kept end
+	return px(v * screenH()) .. "  \194\183  " .. percent(v)
+end
 local function heightPx() return floor((tonumber(ns.Get("ui.maxHeight")) or 0.5) * screenH() + 0.5) end
 -- Typed pixels, kept between 30% and 100% of the screen (as dragging does).
 local function setHeightPx(n) ns.Set("ui.maxHeight", math.min(1, math.max(0.3, n / screenH()))) end
