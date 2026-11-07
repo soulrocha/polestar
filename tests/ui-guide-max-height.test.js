@@ -228,3 +228,86 @@ test('Lock window locks the height drag too', () => {
 	assert.equal(c.line, false);
 	assert.equal(c.grip, false);
 });
+
+// The Options rows on the height limit: the slider, and the number field.
+const ROWS = `
+Polestar.UI.ShowOptions("guide")
+local function find(f, out) for _, c in ipairs({ f:GetChildren() }) do if c.psPath == "ui.maxHeight" then out[#out + 1] = c end find(c, out) end return out end
+local slider, field
+for _, r in ipairs(find(UIParent, {})) do if rawget(r, "Slider") then slider = r elseif rawget(r, "Field") then field = r.Field end end
+local function typeIn(text)
+	field:SetFocus()
+	stub.RunScript(field, "OnEditFocusGained")
+	field:SetText(text)
+	stub.RunScript(field, "OnEnterPressed")
+	stub.RunScript(field, "OnEditFocusLost")
+end
+`;
+
+test('after a drag, a click on the slider thumb leaves the height as dragged (it is not snapped to the 1% step)', () => {
+	const [c] = run(`${DRAG}${ROWS}
+		drag(500, 600, 500, 501)
+		drop()
+		local dragged = Polestar.Get("ui.maxHeight")
+		stub.RunScript(slider.Slider, "OnValueChanged", slider.Slider:GetValue(), true)
+		emit({ dragged = dragged, after = Polestar.Get("ui.maxHeight"), text = slider.Value:GetText() })`);
+	assert.notEqual(Math.round(c.dragged * 100), c.dragged * 100, 'the drag left a value between two steps: ' + c.dragged);
+	assert.equal(c.after, c.dragged);
+});
+
+test('the slider keeps the width its widest value needs after it refreshes', () => {
+	const [c] = run(`${ROWS}
+		local w0 = slider.Value:GetWidth()
+		Polestar.Set("ui.maxHeight", 0.77)
+		emit({ w0 = w0, w1 = slider.Value:GetWidth(), text = slider.Value:GetText() })`);
+	assert.ok(c.w1 >= c.w0, `the value box shrank from ${c.w0} to ${c.w1} (${c.text})`);
+});
+
+test('the number field shows the limit in px, takes a typed value on Enter and clamps it', () => {
+	const [a, b, lo, hi] = run(`${ROWS}
+		emit({ text = field:GetText() })
+		typeIn("600")
+		emit({ max = Polestar.Get("ui.maxHeight"), text = field:GetText(), slider = slider.Slider:GetValue() })
+		typeIn("50")
+		emit({ max = Polestar.Get("ui.maxHeight"), text = field:GetText() })
+		typeIn("5000")
+		emit({ max = Polestar.Get("ui.maxHeight"), text = field:GetText() })`);
+	assert.equal(a.text, '432');
+	assert.ok(Math.abs(b.max - 600 / 1080) < 1e-9);
+	assert.equal(b.text, '600');
+	assert.ok(Math.abs(b.slider - 600 / 1080) < 1e-9, 'the slider follows');
+	assert.equal(lo.max, 0.3);
+	assert.equal(lo.text, '324', 'the corrected value is shown');
+	assert.equal(hi.max, 1);
+	assert.equal(hi.text, '1080');
+});
+
+test('Escape and an empty or non-numeric field put the old number back', () => {
+	const [esc, empty, junk] = run(`${ROWS}
+		field:SetFocus()
+		field:SetText("900")
+		stub.RunScript(field, "OnEscapePressed")
+		stub.RunScript(field, "OnEditFocusLost")
+		emit({ max = Polestar.Get("ui.maxHeight"), text = field:GetText() })
+		typeIn("")
+		emit({ max = Polestar.Get("ui.maxHeight"), text = field:GetText() })
+		typeIn("abc")
+		emit({ max = Polestar.Get("ui.maxHeight"), text = field:GetText() })`);
+	for (const r of [esc, empty, junk]) {
+		assert.equal(r.max, 0.4);
+		assert.equal(r.text, '432');
+	}
+});
+
+test('the field follows a drag, and typing a height turns Automatic off', () => {
+	const [dragged, typed] = run(`${DRAG}${ROWS}
+		drag(500, 600, 500, 500)
+		drop()
+		emit({ text = field:GetText() })
+		Polestar.Set("ui.maxHeightAuto", true)
+		typeIn("700")
+		emit({ auto = Polestar.Get("ui.maxHeightAuto"), max = Polestar.Get("ui.maxHeight") })`);
+	assert.equal(dragged.text, '532');
+	assert.equal(typed.auto, false);
+	assert.ok(Math.abs(typed.max - 700 / 1080) < 1e-9);
+});

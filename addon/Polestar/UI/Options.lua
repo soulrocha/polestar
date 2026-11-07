@@ -167,7 +167,11 @@ local function borderOff() return not ns.Get("ui.border") end
 local function houseOnly() return Theme.SkinKey() ~= "polestar" end
 local function px(v) return string.format(L["%d px"], floor(v + 0.5)) end
 -- The height limit (a share of the screen) with its pixels beside it.
-local function heightText(v) return px(v * UIParent:GetHeight() * UIParent:GetEffectiveScale()) .. "  \194\183  " .. percent(v) end
+local function screenH() return UIParent:GetHeight() * UIParent:GetEffectiveScale() end
+local function heightText(v) return px(v * screenH()) .. "  \194\183  " .. percent(v) end
+local function heightPx() return floor((tonumber(ns.Get("ui.maxHeight")) or 0.5) * screenH() + 0.5) end
+-- Typed pixels, kept between 30% and 100% of the screen (as dragging does).
+local function setHeightPx(n) ns.Set("ui.maxHeight", math.min(1, math.max(0.3, n / screenH()))) end
 -- Guidance options with no effect while Shortest Path Forever guides (Nav/Handoff.lua).
 local function H(c)
 	local N = ns.Nav
@@ -206,6 +210,8 @@ local BUILTIN = {
 			help = L["The window grows into all the free room on screen, under its top edge or over its bottom edge with Grow upward, less the class quest card. Setting a height turns it off."] },
 		{ kind = "slider", key = "ui.maxHeight", label = L["Maximum height"], min = 0.3, max = 1, step = 0.01, format = heightText, search = "height, pixels, px, resize, taller, shorter",
 			help = L["How tall the window may grow, in pixels and as a share of the screen. Drag the grip at the bottom right to set it by eye. Changing it turns off Automatic height. A longer step scrolls."] },
+		{ kind = "number", key = "ui.maxHeight", label = L["Height in pixels"], child = true, get = heightPx, set = setHeightPx,
+			help = L["Type the maximum height in pixels, then Enter. It is kept between 30% and 100% of the screen."] },
 		{ kind = "toggle", key = "ui.showNotes", label = L["Step tips"], help = L["The author's tip under the goals, one line until clicked."] },
 		{ kind = "toggle", key = "ui.notesOpen", label = L["Expand step tips"], help = L["Start each step with its tip in full instead of one line."],
 			child = true, disabled = function() return not ns.Get("ui.showNotes") end },
@@ -925,6 +931,8 @@ local function makeControl(parent, c)
 		local opts
 		if c.release or c.get or c.set then opts = { release = c.release, get = c.get, set = c.set } end
 		w = W.Slider(parent, c.label, c.key, c.min or 0, c.max or 1, c.step or 0.1, c.format, c.help, nil, opts)
+	elseif c.kind == "number" then
+		w = W.NumberRow(parent, c.label, c.key, c.help, { get = c.get, set = c.set })
 	elseif c.kind == "dropdown" then
 		local choices = type(c.choices) == "function" and function() return choicesOf(c) end or choicesOf(c)
 		w = W.Dropdown(parent, c.label, c.key, choices, c.help, nil, (c.get or c.set) and { get = c.get, set = c.set } or nil)

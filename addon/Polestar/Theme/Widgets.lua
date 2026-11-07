@@ -1107,7 +1107,8 @@ function W.SkinSlider(self)
 	if self.psRow then
 		self:SetHeight(max(W.RowH(), self.psDetails and self.psLaidH or 0))
 		s:SetWidth(self.psTrackW or Theme.Metric("sliderW", SLIDER_W))
-		self.Value:SetWidth(Theme.Metric("valueW", VALUE_W))
+		-- Not under what sliderSpan measured for the widest value ("1080 px  -  100%").
+		self.Value:SetWidth(max(Theme.Metric("valueW", VALUE_W), self.psValueW or 0))
 	end
 	self.Thumb:SetTexCoord(0, 1, 0, 1)
 	-- A row's label ends short of the slider: further in the game's looks,
@@ -1184,6 +1185,7 @@ local function sliderSpan(row, width)
 	v:SetText(shown or "")
 	local valueW = max(VALUE_W, math.ceil(need))
 	v:SetWidth(valueW)
+	row.psValueW = valueW
 	local fixed = 12 + valueW + 8 + 10
 	local trackW = max(SLIDER_MIN, min(SLIDER_W, width - 12 - fixed - math.ceil(textWidth(row.Label))))
 	row.Slider:SetWidth(trackW)
@@ -1214,7 +1216,11 @@ function W.Slider(parent, label, path, lo, hi, stepSize, fmt, desc, depends, opt
 	s:SetScript("OnValueChanged", function(_, value, userInput)
 		value = roundTo(value, stepSize)
 		sliderPaint(row, value)
-		if userInput and not row.psRefreshing and W.Enabled(row) and sliderValue(row) ~= value then
+		-- Against the stored value rounded to the step: a setting kept finer than
+		-- the step (a height set by dragging) is not rewritten by a click on its thumb.
+		local cur = sliderValue(row)
+		if type(cur) == "number" then cur = roundTo(cur, stepSize) end
+		if userInput and not row.psRefreshing and W.Enabled(row) and cur ~= value then
 			if opts and opts.release then row.psPending = value else sliderWrite(row, value) end
 		end
 	end)
@@ -1239,6 +1245,49 @@ function W.Slider(parent, label, path, lo, hi, stepSize, fmt, desc, depends, opt
 	row:SetScript("OnLeave", hideTip)
 	row.Refresh = sliderRefresh
 	return W.Bind(row, path, depends)
+end
+
+-- A row with a number field at the right (the search field's well and border).
+-- opts.get() -> the number shown; opts.set(n) applies what was typed, and
+-- get() then gives the value actually kept (clamped). Enter or leaving the
+-- field applies, Escape puts the old number back; digits only.
+local function numberRefresh(self)
+	if not self.Field:HasFocus() then self.Field:SetText(tostring(self.psGet())) end
+	dimRow(self, W.Enabled(self))
+end
+
+function W.NumberRow(parent, label, path, desc, opts)
+	local row = settingRow(parent, label, desc)
+	row.psRow = true
+	row.psGet = opts.get
+	local e = CreateFrame("EditBox", nil, row)
+	e:SetSize(64, 24)
+	e:SetAutoFocus(false)
+	e:SetNumeric(true)
+	e:SetMaxLetters(5)
+	e:SetJustifyH("RIGHT")
+	e:SetTextInsets(8, 8, 0, 0)
+	Theme.Font(e, "label")
+	W.Color(e, "text")
+	Theme.Skin(e, "editbox")
+	e:SetPoint("RIGHT", row, "RIGHT", -12, 0)
+	row.Field = e
+	local function show() e:SetText(tostring(opts.get())) end
+	e:SetScript("OnEditFocusGained", function(self) Theme.SetFocused(self, true); self:HighlightText() end)
+	e:SetScript("OnEditFocusLost", function(self)
+		Theme.SetFocused(self, false)
+		local n = tonumber(self:GetText())
+		if not self.psCancel and n and W.Enabled(row) then opts.set(n) end
+		self.psCancel = nil
+		show()
+	end)
+	e:SetScript("OnEscapePressed", function(self) self.psCancel = true; self:ClearFocus() end)
+	e:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+	fitLabel(row, e, function() return 12 + 64 + 10 end)
+	row:SetScript("OnEnter", rowEnter)
+	row:SetScript("OnLeave", hideTip)
+	row.Refresh = numberRefresh
+	return W.Bind(row, path)
 end
 
 ---------------------------------------------------------------------------
